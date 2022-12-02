@@ -1,0 +1,20 @@
+{% extends 'authenticate/base.html' %}
+
+{% block content %}
+  <div style="margin-left: 30px">
+    {% if user.is_authenticated %}
+      <h1> Welcome {{user.username}} to the Realtime Chat! </h1>
+      <p><strong>Add or change the email</strong>. If you have an email, we can send you a notification always when other users send you messages.</p>
+      <form action="change_email" method="post" style="width:300px">
+        {% csrf_token %}
+        <label for="exampleInputEmail1" class="form-label">Email:</label>
+        <input type="email" class="form-control" name="email" aria-describedby="emailHelp" value="{{user_information.email}}">
+        <input type="submit" value="Save" style="margin-top:20px" class="btn btn-primary ">
+      </form>
+    {% else %}
+      <h1> Welcome to the Realtime Chat! </h1>
+    {%endif %}
+  </div>
+
+{% endblock %}
+

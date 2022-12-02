@@ -1,0 +1,201 @@
+{% extends 'authenticate/base.html' %}
+
+{% block content %}
+  <div class="container w-50 justify-content-md-center">
+    <div class="row justify-content-md-center conainter_messages">
+      <style>
+        .display_messages {
+          max-height: 350px;
+          overflow-y: scroll;
+        }
+        .container_1 {
+          border: 2px solid #dedede;
+          background-color: #f1f1f1;
+          border-radius: 5px;
+          padding: 10px;
+          margin: 10px 0;
+        }
+        
+        .darker {
+          border-color: #ccc;
+          background-color: #ddd;
+        }
+        
+        .container_1::after {
+          content: "";
+          clear: both;
+          display: table;
+        }
+        
+        .container_1 img {
+          float: left;
+          max-width: 60px;
+          width: 100%;
+          margin-right: 20px;
+          border-radius: 50%;
+        }
+        
+        .container_1 img.right {
+          float: right;
+          margin-left: 20px;
+          margin-right:0;
+        }
+        
+        .time-right {
+          float: right;
+          color: #aaa;
+        }
+        
+        .time-left {
+          float: left;
+          color: #999;
+        }
+        .container_2 {
+          width: 75%
+        }
+      </style>
+      <div class="container_2">
+        <h4>Room: {{room.name}}</h4>
+        <p>Now you can talk with {{user2.username}}.And please {{user1.username}}, don't curse.</p>
+        <br/>
+        <div class="display_messages">
+          <div id="display">
+            {% for message in room_messages %}
+              <div class='container_1 darker'>
+                <b>{{message.user.username}}</b>
+                <p>{{message.value}}</p>
+                <div>
+                  {% if message.image %}
+                    <input type="image" src="http://127.0.0.1:8000/{{message.image}}" width="100px" height="100px"/>
+                  {% endif %}
+                </div>
+                <span class='time-left'>{{message.data}}</span>
+              </div>
+            {% endfor %}
+          </div>
+        </div>
+        <div>
+          <style>
+            #message {
+            width: 100%;
+            height:75px;
+            padding: 12px 20px;
+            margin: 8px 0;
+            display: inline-block;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-sizing: border-box;
+            }
+        
+            #submit_send {
+            max-width: 300px;
+            background-color: #4CAF50;
+            color: white;
+            padding: 14px 20px;
+            margin: 8px 0;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            }
+        
+            #submit_send:hover {
+            background-color: #45a049;
+            }
+
+          </style>
+          <div class="container_1 ">
+            <form id="post-form" method="post" enctype="multipart/form-data">
+              {% csrf_token %}
+              <input type="hidden" name="user_id" id="user_id" value="{{user1.id}}"/>
+              <input type="hidden" name="room_id" id="room_id" value="{{room.id}}"/>
+              <input type="text" name="message" id="message" width="150px"/>
+              <input type="submit" id="submit_send" value="Send">
+              <input type="file" name='image' id="id_image" accept="'image/*" style="margin-left: 15px;" onChange="{(e) => {handleImageChange(e)}}">
+              {{ form.file }}
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script type="text/javascript">
+
+    const current_username = "{{user1.username}}"
+    const chat_user = "{{user2.username}}"
+    const room_name = "{{room.name}}"
+    var image
+
+    const chatSocket = new WebSocket(
+      'ws://'
+      + window.location.host
+      + '/ws/room/'
+      + "{{room.name}}"
+    )
+
+    chatSocket.onclose = function() {
+      console.log('onclose')
+    }
+
+    console.log(chatSocket)
+
+    chatSocket.onmessage = function(e) {
+      const data = JSON.parse(e.data)
+
+      if (data.message) {
+        var temp="<div class='container_1 darker'><b>"+data.username+"</b><p>"+data.message+"</p><span class='time-left'>"+data.date.replaceAll('.','')+"</span></div>"
+        $("#display").append(temp)
+      } else {
+        alert('The message was empty')
+      }
+
+      scrollToBottom()
+    }
+
+    document.querySelector('#submit_send').onclick = function(e) {
+      e.preventDefault()
+
+      const message = $('#message').val()
+
+      console.log({
+        'message': message,
+        'username': current_username,
+        'room': room_name,
+        'image_url': image
+      })
+
+      chatSocket.send(JSON.stringify({
+        'message': message,
+        'username': current_username,
+        'username2': chat_user,
+        'room': room_name,
+        'image_name': image
+      }));
+
+      $('#message').val('')
+      $('#id_image').val('')
+      image = null
+
+      return false
+    };
+
+    $(document).ready(function(){
+      scrollToBottom()
+      $('.time-left').each(function(){
+        this.innerHTML = this.innerHTML.replaceAll('.','')
+      })
+    })
+
+
+    document.querySelector('#id_image').onchange = function(e) {
+      image = e.target.files[0]
+    }
+
+    function scrollToBottom() {
+        let objDiv = $('.display_messages')[0]
+        objDiv.scrollTop = objDiv.scrollHeight
+    }
+
+  </script>
+
+{% endblock %}

@@ -1,0 +1,28 @@
+{% extends 'authenticate/base.html' %}
+
+{% block content %}
+  <div class="container w-50">
+    <div class="row justify-content-md-center">
+      <h1> Register </h1>
+      {% if form.errors %}
+        {% for error in form.errors %}
+          <div class="alert alert-warning alert-dismissible fade show" role="alert">
+            There was an error with your form. Check all rules for username and password.
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+          </div>
+        {% endfor %}
+      {% endif %}
+
+      <br/><br/>
+
+      <form action="{% url 'register_user' %}" method="post" >
+        {% csrf_token %}
+
+        {{ form.as_p }}
+        <br/>
+        <input type="submit" value="Submit" class="btn btn-primary ">
+      </form>
+    </div>
+  </div>
+{% endblock %}
+
